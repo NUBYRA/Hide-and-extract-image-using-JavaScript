@@ -1,0 +1,135 @@
+//simple function for cropping an image 
+
+function crop(image, width, height){
+     var n = new SimpleImage(width,height);
+     for(var p of image.values()){
+   	   var x = p.getX();
+   	   var y = p.getY();
+   	   if (x < width && y < height){
+   	       var np = n.getPixel(x,y);
+   	       np.setRed(p.getRed());
+   	       np.setBlue(p.getBlue());
+   	       np.setGreen(p.getGreen()); 
+   	   }
+     }
+     return n;
+}
+
+
+// change pixel value for chopping the right 'n' bits
+
+function pixchange(pxvalue,numbits){
+    
+    if(isNaN(numbits) || numbits > 8 || numbits <1){
+	   alert("Number of bits must be between 1 and 8.");
+	   return -1;
+	}
+	
+	else{ 
+        if(numbits == 1){
+	        if((pxvalue % 2) == 1){
+	            return pxvalue-1;
+	        }
+	        else{
+	            return pxvalue;
+	        }
+    	}
+	    else{
+	        return Math.floor(pxvalue/Math.pow(2,numbits))*Math.pow(2,numbits);
+	    }
+	}
+}
+
+//chop the right 'n' bits of the start image to prepare for hiding an image in the start image 
+
+function chop2hide(image,numbits){
+
+    if(isNaN(numbits) || numbits > 8 || numbits <1){
+	   alert("Number of bits must be between 1 and 8.");
+	   return -1;
+	}
+	
+	else{
+    	for(var p of image.values()){
+        	p.setRed(pixchange(p.getRed(),numbits));
+        	p.setGreen(pixchange(p.getGreen(),numbits));
+        	p.setBlue(pixchange(p.getBlue(),numbits));
+    	}
+    	return image;
+    }
+    
+}
+
+//chop and shift the left 'n' bits to hide the image
+
+function shift(image,numbits){
+    if(isNaN(numbits) || numbits < 1 || numbits > 8){
+        alert("Number of bits must be between 1 and 8");
+        return -1;
+    }
+    else{
+        var num = Math.pow(2,numbits);
+        var n = new SimpleImage(image.getWidth(),image.getHeight());
+        for(var p of image.values()){
+            var x = p.getX();
+            var y = p.getY();
+            var np = n.getPixel(x,y); 
+            np.setRed(Math.floor(p.getRed()/num));
+            np.setGreen(Math.floor(p.getGreen()/num));
+            np.setBlue(Math.floor(p.getBlue()/num));
+        }
+        return n;
+    }
+}
+
+
+//function for adding the the pixel values from start and hide images
+function newpv(p,q) {
+     var answer = p + q;
+     if (answer > 255){
+         print("error: answer too big"); 
+    	 }  
+    else{
+        return answer;
+        }
+}
+
+//function for combining the two images 
+function combine(a,b){
+     var n = new SimpleImage(a.getWidth(), a.getHeight());
+     for(var pa of a.values()){
+    	var x = pa.getX();
+    	var y = pa.getY();
+    	var pb = b.getPixel(x,y);
+    	var np = n.getPixel(x,y);
+    	red = newpv(pa.getRed(),pb.getRed())
+    	green = newpv(pa.getGreen(),pb.getGreen())
+    	blue = newpv(pa.getBlue(),pb.getBlue())
+    	np.setRed(red);
+    	np.setGreen(green);
+    	np.setBlue(blue);
+     }
+     return n;
+}
+
+//function for hiding an image in another image 
+
+function HideImage(start, hide, numbits){
+	var cropWidth = start.getWidth();
+	if (hide.getWidth() < cropWidth) {
+		cropWidth = hide.getWidth();
+	}
+	var cropHeight = start.getHeight();
+	if (hide.getHeight() < cropHeight) {
+		cropHeight = hide.getHeight();
+	}
+
+	start = crop(start,cropWidth, cropHeight);
+	hide = crop(hide,cropWidth, cropHeight);
+	
+	start = chop2hide(start, numbits);
+	hide = shift(hide, numbits);
+	newimage = combine(start,hide);
+	
+	return newimage;
+	}
